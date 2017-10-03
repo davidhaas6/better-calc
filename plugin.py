@@ -1,19 +1,20 @@
 import os
 from math import *
+import time
 
 def results(fields, original_query):
     exp = fields['~expression']
     #print exp
     try:
+        time.sleep(0.1)
         ans = eval(exp)
         #print ans
     except Exception as e:
-        #print e
+        print e
         ans = 'N/A'
     return {
-        "title": "{0}".format(ans),
-        "run_args": [exp]
-    }
+        "title": "{0}".format(ans)
+        }
 
 def run(expression):
     os.system('echo "{0}"'.format(exp))
