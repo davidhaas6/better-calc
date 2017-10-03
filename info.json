@@ -1,0 +1,9 @@
+{
+    "name": "better-calc",
+    "displayName": "Better Calculator",
+    "description": "A better spotlight calculator.",
+    "examples": ["# 2+3, # (2*6+3)/7^2"],
+    "categories": ["Utilities"],
+    "creator_name": "David Haas",
+    "creator_url": "apvocab.com"
+}
