@@ -6,7 +6,7 @@ def results(fields, original_query):
     exp = fields['~expression']
     #print exp
     try:
-        time.sleep(0.1) # A buffer time so it doesn't display "No Results"
+        time.sleep(0.2) # A buffer time so it doesn't display "No Results"
         ans = eval(exp)
         #print ans
     except Exception as e:
@@ -26,28 +26,24 @@ def amu(compound):
     # Splits compound up based on upper case letters
     path = os.path.dirname(os.path.realpath(__file__))
     tot_mass = 0
-    split_atoms = re.findall(r'[A-Z]+[^A-Z]*', compound)
-    elements = [no_nums(e) for e in split_atoms]
-    moles = []
-    for e in split_atoms:
-        num = re.findall('\d', e)
-        print num
-        if not num:
-            moles+=[1]
+    elements_moles = []
+    for c in compound:
+        if c.isupper():
+            elements_moles+=[[c,1]]
+        elif c.isdigit():
+            elements_moles[len(elements_moles)-1][1] = int(c)
         else:
-            moles+=[int(''.join(num))]
+            elements_moles[len(elements_moles)-1][0] += c
 
-    elements_with_moles = dict()
-    for i in range(len(elements)):
-        elements_with_moles[elements[i]] = moles[i]
-    # print split_atoms, elements_with_moles
+    elements_moles = dict(elements_moles)
+    #print elements_moles
 
     with open(path + '/periodic-data.json') as data_file:
         p_table = json.load(data_file)
 
     for p_elem in p_table:
-        if p_elem['symbol'] in elements_with_moles.keys():
-            num_moles = elements_with_moles[p_elem['symbol']]
+        if p_elem['symbol'] in elements_moles.keys():
+            num_moles = elements_moles[p_elem['symbol']]
             mass = p_elem['atomicMass']
             parenthesies = mass.find('(')
             if parenthesies != -1:
@@ -65,6 +61,6 @@ def no_nums(s):
     return new_str
 
 #print eval('amu(\'Hg\')')
-# print amu('C4H10')
+#print amu('SO4')
 #inp="amu('Hg')"
 #print results({'~expression':inp} , '')
