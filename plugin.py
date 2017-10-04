@@ -4,6 +4,7 @@ import time
 
 def results(fields, original_query):
     exp = fields['~expression']
+    exp = add_quotes(exp)
     #print exp
     try:
         time.sleep(0.2) # A buffer time so it doesn't display "No Results"
@@ -20,13 +21,11 @@ def run(expression):
     os.system('echo "{0}"'.format(exp))
 
 def amu(compound):
-    import re
     import json
-
-    # Splits compound up based on upper case letters
-    path = os.path.dirname(os.path.realpath(__file__))
     tot_mass = 0
     elements_moles = []
+
+    # Creates a dict ex: H2O would be{'H': 2, 'O': 1}
     for c in compound:
         if c.isupper():
             elements_moles+=[[c,1]]
@@ -38,29 +37,47 @@ def amu(compound):
     elements_moles = dict(elements_moles)
     #print elements_moles
 
+    # Gets path of folder containing file
+    path = os.path.dirname(os.path.realpath(__file__))
     with open(path + '/periodic-data.json') as data_file:
         p_table = json.load(data_file)
 
+    # Goes through each element in the periodic table
     for p_elem in p_table:
+
+        # Checks if the current element is in the compound
         if p_elem['symbol'] in elements_moles.keys():
             num_moles = elements_moles[p_elem['symbol']]
             mass = p_elem['atomicMass']
+
+            # Some masses are presented as 4.0124(4), so this removes the parenthesies
             parenthesies = mass.find('(')
             if parenthesies != -1:
                 mass = float(mass[0:parenthesies])
             else:
                 mass = float(mass)
+
             tot_mass += mass * num_moles
     return tot_mass
 
-def no_nums(s):
-    new_str = s
-    for c in s:
-        if c.isdigit():
-            new_str = new_str.replace(c,'')
-    return new_str
+def add_quotes(exp):
+    custom_funcs = ['amu']
+    for func in custom_funcs:
+        index = 0
+        while index < len(exp):
+            index = exp.find(func, index)
+            if index == -1:
+                break
+            index += len(func)+1
+            exp = insert(exp, index, '\'')
+            exp = insert(exp, exp.find(')', index), '\'')
+    return exp
+
+# Inserts a string at position index of input_string
+def insert(input_string, index, ins):
+    return input_string[:index] + str(ins) + input_string[index:]
 
 #print eval('amu(\'Hg\')')
 #print amu('SO4')
-#inp="amu('Hg')"
+#inp="amu(Hg)"
 #print results({'~expression':inp} , '')
