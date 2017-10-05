@@ -5,7 +5,6 @@ import time
 def results(fields, original_query):
     exp = fields['~expression']
     exp = format_for_eval(exp)
-    #print exp
 
     try:
         time.sleep(0.2) # A buffer time so it doesn't display "No Results"
@@ -24,19 +23,7 @@ def run(expression):
 def amu(compound):
     import json
     tot_mass = 0
-    elements_moles = []
-
-    # Creates a dict ex: H2O would be{'H': 2, 'O': 1}
-    for c in compound:
-        if c.isupper():
-            elements_moles += [[c,1]]
-        elif c.isdigit():
-            elements_moles[len(elements_moles)-1][1] = int(c)
-        else:
-            elements_moles[len(elements_moles)-1][0] += c
-
-    elements_moles = dict(elements_moles)
-    #print elements_moles
+    elements_moles = get_element_mole_form(compound)
 
     # Gets path of folder containing file
     path = os.path.dirname(os.path.realpath(__file__))
@@ -51,29 +38,102 @@ def amu(compound):
             num_moles = elements_moles[p_elem['symbol']]
             mass = p_elem['atomicMass']
 
-            # Some masses are presented as 4.0124(4), so this removes the parenthesies
-            parenthesies = mass.find('(')
-            if parenthesies != -1:
-                mass = float(mass[0:parenthesies])
+            # Some masses are presented as 4.0124(4), so this removes the pthesies
+            pthesies = mass.find('(')
+            if pthesies != -1:
+                mass = float(mass[0:pthesies])
             else:
                 mass = float(mass)
 
             tot_mass += mass * num_moles
     return tot_mass
 
-# Adds quotes around inputs for custom functions, turns ints into floats
+# Creates a dict ex: H2O would be {'H': 2, 'O': 1}
+def get_element_mole_form(compound):
+    elements_moles = []
+    compound = compound.replace('.','')
+    i = 0
+    while i < len(compound):
+        c = compound[i]
+        if c.isupper():
+            keys = [k for k,v in elements_moles]
+            if c not in keys:
+                elements_moles += [[c,1]]
+            else:
+                elements_moles[keys.index(c)][1] += 1
+
+        elif c.isdigit():
+            factor = ''
+            x = i
+            while x < len(compound) and compound[x].isdigit():
+                factor += compound[x]
+                x += 1
+            elements_moles[len(elements_moles)-1][1] += int(factor)-1
+            i = x-1
+
+        else:
+            elements_moles[len(elements_moles)-1][0] += c
+        i += 1
+
+    return dict(elements_moles)
+
+# TODO: Clean up this garbage, smh
+# Performs various parsing to optimize the input for the eval() function
 def format_for_eval(exp):
-    # Adds quotes
+
+    #TODO: Clean this up and move over to get_element_mole_form()
+    # Distributes moles for parenthesies
+    i = 0
+    while i < len(exp):
+        i = exp.find('amu(', i)
+        if i == -1:
+            break
+        i += len('amu(') + 1
+        open_p_indx = []
+        close_p_indx = []
+        for j in range(i, len(exp)):
+            if exp[j] == '(':
+                open_p_indx += [j]
+            elif exp[j] == ')':
+                if len(open_p_indx) == len(close_p_indx):
+                    i = j
+                    break
+                else:
+                    close_p_indx += [j]
+
+        for k in range(len(open_p_indx)):
+            inner_cmpnd = exp[open_p_indx[k]+1:close_p_indx[k]].replace(' ','')
+            next_char = exp[close_p_indx[k]+1]
+            if next_char.isdigit():
+                x = close_p_indx[k]+2
+                factor = ''
+                while x < len(exp) and next_char.isdigit():
+                    factor += next_char
+                    next_char = exp[x]
+                    x += 1
+                elem_mol = get_element_mole_form(inner_cmpnd)
+                for e in elem_mol.keys():
+                    elem_mol[e] *= int(factor)
+                inner_cmpnd_distr = ''.join([k + str(v) for k,v in elem_mol.iteritems()])
+                replace_target = '(' + inner_cmpnd + ')' + factor
+                exp = exp.replace(replace_target, inner_cmpnd_distr)
+            else:
+                replace_target = '(' + inner_cmpnd + ')'
+                exp = exp.replace(replace_target, inner_cmpnd)
+
+    # Adds quotes around custom functions
     custom_funcs = ['amu']
     for func in custom_funcs:
-        index = 0
-        while index < len(exp):
-            index = exp.find(func, index)
-            if index == -1:
+        i = 0
+        while i < len(exp):
+            i = exp.find(func, i)
+            if i == -1:
                 break
-            index += len(func)+1
-            exp = insert(exp, index, '\'')
-            exp = insert(exp, exp.find(')', index), '\'')
+            i += len(func)+1
+            exp = insert(exp, i, '\'')
+            counts = {'(': 0, ')': 0}
+
+            exp = insert(exp, exp.find(')', i), '\'')
 
     # Turns ints into floats
     i = 0
@@ -84,15 +144,14 @@ def format_for_eval(exp):
         i += 1
     if exp[i].isdigit():
         exp = insert(exp, i+1, '.')
-
     return exp
 
+# Inserts a string at position i of input_string
+def insert(input_string, i, ins):
+    return input_string[:i] + str(ins) + input_string[i:]
 
-# Inserts a string at position index of input_string
-def insert(input_string, index, ins):
-    return input_string[:index] + str(ins) + input_string[index:]
-
-#print eval('amu(\'Hg\')')
-#print amu('SO4')
-#inp="1/1"
+#print eval('amu(\'Hg\')'])
+#print amu('SO4.')
+#print format_for_eval('amu(H2(SO4)4)')
+#inp='amu(Pb(SO4)2)/amu(H)'
 #print results({'~expression':inp} , '')
