@@ -82,7 +82,7 @@ def get_element_mole_form(compound):
 def format_for_eval(exp):
 
     #TODO: Clean this up and move over to get_element_mole_form()
-    # Distributes moles for parenthesies
+    # Distributes moles for parentheses
     i = 0
     while i < len(exp):
         i = exp.find('amu(', i)
@@ -135,15 +135,21 @@ def format_for_eval(exp):
 
             exp = insert(exp, exp.find(')', i), '\'')
 
+    #TODO: Fix - breaks numbers that already have a decimal
     # Turns ints into floats
     i = 0
     while i < len(exp)-1:
-        if exp[i].isdigit() and not exp[i+1].isdigit():
-            exp = insert(exp, i+1, '.')
-            i += 1
+        if exp[i].isdigit():
+            if exp[i+1] == '.':
+                # Set to the index of the character after the decimal point
+                i += 2
+                # Skip past the decimal places eg: '123.312.' doesn't occur
+                while i < len(exp)-1 and exp[i].isdigit():
+                    i+=1
+            elif not exp[i+1].isdigit():
+                exp = insert(exp, i+1, '.')
         i += 1
-    if exp[i].isdigit():
-        exp = insert(exp, i+1, '.')
+
     return exp
 
 # Inserts a string at position i of input_string
@@ -152,6 +158,6 @@ def insert(input_string, i, ins):
 
 #print eval('amu(\'Hg\')'])
 #print amu('SO4.')
-#print format_for_eval('amu(H2(SO4)4)')
+#print format_for_eval('23.123/amu(S(OH)3)')
 #inp='amu(Pb(SO4)2)/amu(H)'
 #print results({'~expression':inp} , '')
