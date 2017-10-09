@@ -7,11 +7,11 @@ def results(fields, original_query):
     exp = format_for_eval(exp)
 
     try:
-        time.sleep(0.2) # A buffer time so it doesn't display "No Results"
+        # A buffer time to try to fix "No results." bug
+        time.sleep(0.2)
+
         ans = eval(exp)
-        #print ans
     except Exception as e:
-        # print e
         ans = 'N/A'
     return {
         "title": "{0}".format(ans)
@@ -23,6 +23,8 @@ def run(expression):
 def amu(compound):
     import json
     tot_mass = 0
+
+    # A dict of each element and their respective # of moles
     elements_moles = get_element_mole_form(compound)
 
     # Gets path of folder containing file
@@ -38,7 +40,7 @@ def amu(compound):
             num_moles = elements_moles[p_elem['symbol']]
             mass = p_elem['atomicMass']
 
-            # Some masses are presented as 4.0124(4), so this removes the pthesies
+            # Some masses are presented as 4.0124(4), so this removes the parentheses
             pthesies = mass.find('(')
             if pthesies != -1:
                 mass = float(mass[0:pthesies])
@@ -77,7 +79,7 @@ def get_element_mole_form(compound):
 
     return dict(elements_moles)
 
-# TODO: Clean up this garbage, smh
+# TODO: Clean up and comment this garbage, smh
 # Performs various parsing to optimize the input for the eval() function
 def format_for_eval(exp):
 
@@ -135,7 +137,6 @@ def format_for_eval(exp):
 
             exp = insert(exp, exp.find(')', i), '\'')
 
-    #TODO: Fix - breaks numbers that already have a decimal
     # Turns ints into floats
     i = 0
     while i < len(exp)-1:
@@ -148,6 +149,10 @@ def format_for_eval(exp):
                     i+=1
             elif not exp[i+1].isdigit():
                 exp = insert(exp, i+1, '.')
+        elif exp[i] == '.': # If the number starts with a decimal eg .123
+            i += 2
+            while i < len(exp)-1 and exp[i].isdigit():
+                i+=1
         i += 1
 
     return exp
@@ -156,8 +161,6 @@ def format_for_eval(exp):
 def insert(input_string, i, ins):
     return input_string[:i] + str(ins) + input_string[i:]
 
-#print eval('amu(\'Hg\')'])
-#print amu('SO4.')
-#print format_for_eval('23.123/amu(S(OH)3)')
+#print format_for_eval('132')
 #inp='amu(Pb(SO4)2)/amu(H)'
 #print results({'~expression':inp} , '')
