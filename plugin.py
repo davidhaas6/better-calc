@@ -90,35 +90,58 @@ def format_for_eval(exp):
         i = exp.find('amu(', i)
         if i == -1:
             break
-        i += len('amu(') + 1
+
+        i += len('amu(')
         open_p_indx = []
         close_p_indx = []
+
+        # Gets all of the indexes of the inner parentheses in the amu function
         for j in range(i, len(exp)):
             if exp[j] == '(':
                 open_p_indx += [j]
             elif exp[j] == ')':
+                # If there are are more closed parentheses then open ones
                 if len(open_p_indx) == len(close_p_indx):
                     i = j
                     break
                 else:
                     close_p_indx += [j]
 
+        # Goes through all of the open_p, closed_p pairs
         for k in range(len(open_p_indx)):
+            # The compound surrounded in parentheses eg. in Cu(SO4)3,
+            # inner_cmpnd = 'SO4'
             inner_cmpnd = exp[open_p_indx[k]+1:close_p_indx[k]].replace(' ','')
+
+            # The char after the particular closed parentheses so in '(OH)3',
+            # next_char = '3'
             next_char = exp[close_p_indx[k]+1]
+
+            # If a digit follows the parentheses
             if next_char.isdigit():
-                x = close_p_indx[k]+2
+
+                # The number that is being distributed into inner_cmpnd
                 factor = ''
+
+                x = close_p_indx[k]+2
                 while x < len(exp) and next_char.isdigit():
                     factor += next_char
                     next_char = exp[x]
                     x += 1
+
                 elem_mol = get_element_mole_form(inner_cmpnd)
+
+                # Distrubutes the factor to the moles of the inner_cmpnd
                 for e in elem_mol.keys():
                     elem_mol[e] *= int(factor)
+
+                # Forms the distributed inner_cmpnd back into a string from the
+                # elem_mol dict it was turned into
                 inner_cmpnd_distr = ''.join([k + str(v) for k,v in elem_mol.iteritems()])
+
                 replace_target = '(' + inner_cmpnd + ')' + factor
                 exp = exp.replace(replace_target, inner_cmpnd_distr)
+
             else:
                 replace_target = '(' + inner_cmpnd + ')'
                 exp = exp.replace(replace_target, inner_cmpnd)
@@ -133,8 +156,6 @@ def format_for_eval(exp):
                 break
             i += len(func)+1
             exp = insert(exp, i, '\'')
-            counts = {'(': 0, ')': 0}
-
             exp = insert(exp, exp.find(')', i), '\'')
 
     # Turns ints into floats
@@ -142,14 +163,17 @@ def format_for_eval(exp):
     while i < len(exp)-1:
         if exp[i].isdigit():
             if exp[i+1] == '.':
-                # Set to the index of the character after the decimal point
+                # Sets index to character after the decimal point
                 i += 2
-                # Skip past the decimal places eg: '123.312.' doesn't occur
+
+                # Skips past the decimal places so '123.312.' doesn't occur
                 while i < len(exp)-1 and exp[i].isdigit():
                     i+=1
             elif not exp[i+1].isdigit():
                 exp = insert(exp, i+1, '.')
-        elif exp[i] == '.': # If the number starts with a decimal eg .123
+
+        # If the number starts with a decimal eg .123
+        elif exp[i] == '.':
             i += 2
             while i < len(exp)-1 and exp[i].isdigit():
                 i+=1
@@ -161,6 +185,6 @@ def format_for_eval(exp):
 def insert(input_string, i, ins):
     return input_string[:i] + str(ins) + input_string[i:]
 
-#print format_for_eval('132')
+print format_for_eval('amu(Cu(SK4)3)')
 #inp='amu(Pb(SO4)2)/amu(H)'
 #print results({'~expression':inp} , '')
