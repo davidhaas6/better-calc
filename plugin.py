@@ -4,17 +4,23 @@ import time
 
 def results(fields, original_query):
     exp = fields['~expression']
-    exp = format_for_eval(exp)
 
     try:
         # A buffer time to try to fix "No results." bug
         time.sleep(0.2)
 
-        ans = eval(exp)
+        ans = eval(format_for_eval(exp))
+
+        if ans.is_integer():  # Takes of the decimal if possible
+            ans = int(ans)
     except Exception as e:
         ans = 'N/A'
+    from centered_text import centered_text
+    equation_html = '<div id=\'exp\'>{0} =</div><hr><div id=\'ans\'>{1}</div>'.format(exp, ans)
     return {
-        "title": "{0}".format(ans)
+        "title": "{0}".format(ans),
+        "html": centered_text(equation_html),
+        "webview_transparent_background": True
         }
 
 def run(expression):
@@ -185,6 +191,6 @@ def format_for_eval(exp):
 def insert(input_string, i, ins):
     return input_string[:i] + str(ins) + input_string[i:]
 
-print format_for_eval('amu(Cu(SK4)3)')
+#print format_for_eval('amu(Cu(SK4)3)')
 #inp='amu(Pb(SO4)2)/amu(H)'
 #print results({'~expression':inp} , '')
