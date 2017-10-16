@@ -45,6 +45,8 @@ def amu(compound):
         if p_elem['symbol'] in elements_moles.keys():
             num_moles = elements_moles[p_elem['symbol']]
             mass = p_elem['atomicMass']
+            if type(mass) is list:
+                mass = str(mass[0])
 
             # Some masses are presented as 4.0124(4), so this removes the parentheses
             pthesies = mass.find('(')
@@ -194,6 +196,7 @@ def format_for_eval(exp):
 def insert(input_string, i, ins):
     return input_string[:i] + str(ins) + input_string[i:]
 
+#print amu('Po')
 #print format_for_eval('amu(Cu(SK4)3)')
 #inp='amu(Pb(SO4)2)/amu(H)'
 #print results({'~expression':inp} , '')
