@@ -185,6 +185,9 @@ def format_for_eval(exp):
                 i+=1
         i += 1
 
+    # Python uses ** to denote exponents
+    exp = exp.replace('^','**')
+
     return exp
 
 # Inserts a string at position i of input_string
